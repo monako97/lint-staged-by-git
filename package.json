@@ -1,0 +1,29 @@
+{
+  "name": "lint-staged-by-git",
+  "version": "1.0.0",
+  "description": "基于 Git 提交记录，按需执行 lint",
+  "main": "./lib/index.mjs",
+  "scripts": {
+    "prepublishOnly": "node build.mjs"
+  },
+  "bin": {
+    "lint-git": "./bin/index.mjs"
+  },
+  "keywords": [
+    "lint-staged",
+    "git",
+    "eslint",
+    "stylelint"
+  ],
+  "author": "",
+  "license": "ISC",
+  "files": [
+    "lib",
+    "bin"
+  ],
+  "devDependencies": {
+    "@moneko/convert": "^1.0.0",
+    "@types/node": "^22.13.5",
+    "eslint": "^9.21.0"
+  }
+}
