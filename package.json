@@ -1,6 +1,6 @@
 {
   "name": "lint-staged-by-git",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "基于 Git 提交记录，按需执行 lint",
   "main": "./lib/index.mjs",
   "scripts": {
