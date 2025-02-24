@@ -24,10 +24,10 @@ function parseArgs<T>(args: string[]): T {
   ) as T;
 }
 type Args = {
-    fix?: boolean;
-    cache?: boolean;
-    mode?: 'ci' | 'commit';
-  };
+  fix?: boolean;
+  cache?: boolean;
+  mode?: 'ci' | 'commit';
+};
 const args: Args = parseArgs<Args>(argv.slice(2));
 const fix: boolean | undefined = args.fix;
 const cache: boolean = args.cache || true;
@@ -39,7 +39,13 @@ const cmd = {
   // commit缓冲区文件
   commit: ['diff', '--cached', '--name-only', '--diff-filter=ACMR'],
 } as const;
-const child: SpawnSyncReturns<Buffer<ArrayBufferLike>> = spawnSync('git', cmd[args.mode || 'ci'] || cmd.ci);
+const scriptRegExp = /.*(?<!\.d)\.(j|t|mj|mt|cj|ct)sx?$/;
+const vueRegExp = /.*(?<!\.d)\.vue$/;
+const styleRegExp = /.*(?<!\.d)\.(c|sc|sa|le)ss$/;
+const child: SpawnSyncReturns<Buffer<ArrayBufferLike>> = spawnSync(
+  'git',
+  cmd[args.mode || 'ci'] || cmd.ci,
+);
 const lintFiles: string[] = child.stdout.toString().trim().split('\n');
 
 export async function eslint() {
@@ -50,9 +56,7 @@ export async function eslint() {
     cacheLocation: `${cachePath}/.eslintcache`,
     fix,
   });
-  const scriptFiles = lintFiles.filter(
-    (f) => /.*(?<!\.d)\.(j|t|mj|mt|cj|ct)sx?$/.test(f) || /.*(?<!\.d)\.vue$/.test(f),
-  );
+  const scriptFiles = lintFiles.filter((f) => scriptRegExp.test(f) || vueRegExp.test(f));
   const results = await lint.lintFiles(scriptFiles);
   const formatter = await lint.loadFormatter('stylish');
   const output = await formatter.format(results);
@@ -71,26 +75,22 @@ export async function eslint() {
   }
 }
 
-const styleFiles: string[] = lintFiles.filter(
-  (f) => /.*(?<!\.d)\.(c|sc|sa|le)ss$/.test(f) || /.*(?<!\.d)\.vue$/.test(f),
-);
+const styleFiles: string[] = lintFiles.filter((f) => styleRegExp.test(f) || vueRegExp.test(f));
 
 export async function stylelint() {
   console.log('Stylelint runing...');
   console.time('Stylelint');
   const resp = await Promise.all(
-    styleFiles.map(async (src) => {
-      const source = await readFile(src, { encoding: 'utf-8' });
-      const result = await Stylelint
-        .lint({
-          codeFilename: src,
-          code: source,
-          cache,
-          cacheLocation: `${cachePath}/.stylelintcache`,
-          fix,
-          formatter: 'string',
-        })
-        .catch(console.log);
+    styleFiles.map(async (codeFilename) => {
+      const code = await readFile(codeFilename, { encoding: 'utf-8' });
+      const result = await Stylelint.lint({
+        codeFilename,
+        code,
+        cache,
+        cacheLocation: `${cachePath}/.stylelintcache`,
+        fix,
+        formatter: 'string',
+      }).catch(console.log);
 
       return result;
     }),
@@ -113,4 +113,3 @@ export async function stylelint() {
     process.exit(1);
   }
 }
-
