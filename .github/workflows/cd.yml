@@ -24,8 +24,6 @@ jobs:
             - recursive: false
       - name: 'install'
         run: pnpm install
-      - name: 'Bundle'
-        run: npm run build
       - name: 'Publish to npm'
         run: |
           NPM_PACKAGE_NAME=$(node -p "require('./package.json').name")
