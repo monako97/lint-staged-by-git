@@ -1,6 +1,6 @@
 {
   "name": "lint-staged-by-git",
-  "version": "1.0.2",
+  "version": "1.1.0",
   "description": "基于 Git 提交记录，按需执行 lint",
   "main": "./lib/index.mjs",
   "scripts": {
@@ -21,9 +21,12 @@
     "lib",
     "bin"
   ],
+  "peerDependencies": {
+    "@moneko/eslint": "^1.0.1",
+    "@moneko/stylelint": "^1.0.2"
+  },
   "devDependencies": {
-    "@moneko/convert": "^1.0.0",
-    "@types/node": "^22.13.5",
-    "eslint": "^9.21.0"
+    "@moneko/convert": "1.0.0",
+    "@types/node": "22.13.10"
   }
 }

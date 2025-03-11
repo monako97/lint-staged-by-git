@@ -3,8 +3,8 @@ import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { argv } from 'node:process';
 
+import { ESLint } from '@moneko/eslint';
 import { stylelint as Stylelint } from '@moneko/stylelint';
-import { ESLint } from 'eslint';
 
 function parseArgs<T>(args: string[]): T {
   return Object.fromEntries(
@@ -20,7 +20,7 @@ function parseArgs<T>(args: string[]): T {
         value = parseFloat(value);
       }
       return [kv[0].replace(/^--/, ''), value];
-    }),
+    })
   ) as T;
 }
 type Args = {
@@ -39,39 +39,40 @@ const cmd = {
   // commit缓冲区文件
   commit: ['diff', '--cached', '--name-only', '--diff-filter=ACMR'],
 } as const;
-const scriptRegExp = /.*(?<!\.d)\.(j|t|mj|mt|cj|ct)sx?$/;
-const vueRegExp = /.*(?<!\.d)\.vue$/;
-const styleRegExp = /.*(?<!\.d)\.(c|sc|sa|le)ss$/;
-const child: SpawnSyncReturns<Buffer<ArrayBufferLike>> = spawnSync(
-  'git',
-  cmd[args.mode || 'ci'] || cmd.ci,
-);
+const scriptRegExp: RegExp = /.*(?<!\.d)\.(j|t|mj|mt|cj|ct)sx?$/;
+const vueRegExp: RegExp = /.*(?<!\.d)\.vue$/;
+const styleRegExp: RegExp = /.*(?<!\.d)\.(c|sc|sa|le)ss$/;
+const child: SpawnSyncReturns<Buffer> = spawnSync('git', cmd[args.mode || 'ci'] || cmd.ci);
 const lintFiles: string[] = child.stdout.toString().trim().split('\n');
 
 export async function eslint() {
   console.log('ESLint runing...');
-  console.time('ESLint');
-  const lint = new ESLint({
-    cache,
-    cacheLocation: `${cachePath}/.eslintcache`,
-    fix,
-  });
-  const scriptFiles = lintFiles.filter((f) => scriptRegExp.test(f) || vueRegExp.test(f));
-  const results = await lint.lintFiles(scriptFiles);
-  const formatter = await lint.loadFormatter('stylish');
-  const output = await formatter.format(results);
+  try {
+    console.time('ESLint');
+    const lint = new ESLint({
+      cache,
+      cacheLocation: `${cachePath}/.eslintcache`,
+      fix,
+    });
+    const scriptFiles = lintFiles.filter((f) => scriptRegExp.test(f) || vueRegExp.test(f));
+    const results = await lint.lintFiles(scriptFiles);
+    const formatter = await lint.loadFormatter('stylish');
+    const output = await formatter.format(results);
 
-  if (fix) {
-    await ESLint.outputFixes(results);
-  }
-  if (output) {
-    process.stdout.write(output);
-  }
-  const hasErrors = results.some((result) => result.errorCount > 0);
+    if (fix) {
+      await ESLint.outputFixes(results);
+    }
+    if (output) {
+      process.stdout.write(output);
+    }
+    const hasErrors = results.some((result) => result.errorCount > 0);
 
-  console.timeEnd('ESLint');
-  if (hasErrors) {
-    process.exit(1);
+    console.timeEnd('ESLint');
+    if (hasErrors) {
+      process.exit(1);
+    }
+  } catch (error) {
+    console.error(error);
   }
 }
 
@@ -93,7 +94,7 @@ export async function stylelint() {
       }).catch(console.log);
 
       return result;
-    }),
+    })
   );
   let hasError = false;
 
