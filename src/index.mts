@@ -49,12 +49,17 @@ export async function eslint() {
   console.log('ESLint runing...');
   try {
     console.time('ESLint');
+    const scriptFiles = lintFiles.filter((f) => scriptRegExp.test(f) || vueRegExp.test(f));
+
+    if (scriptFiles.length === 0) {
+      console.timeEnd('ESLint');
+      return;
+    }
     const lint = new ESLint({
       cache,
       cacheLocation: `${cachePath}/.eslintcache`,
       fix,
     });
-    const scriptFiles = lintFiles.filter((f) => scriptRegExp.test(f) || vueRegExp.test(f));
     const results = await lint.lintFiles(scriptFiles);
     const formatter = await lint.loadFormatter('stylish');
     const output = await formatter.format(results);
@@ -81,6 +86,10 @@ const styleFiles: string[] = lintFiles.filter((f) => styleRegExp.test(f) || vueR
 export async function stylelint() {
   console.log('Stylelint runing...');
   console.time('Stylelint');
+  if (styleFiles.length === 0) {
+    console.timeEnd('Stylelint');
+    return;
+  }
   const resp = await Promise.all(
     styleFiles.map(async (codeFilename) => {
       const code = await readFile(codeFilename, { encoding: 'utf-8' });
